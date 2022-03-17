@@ -1,4 +1,3 @@
-import { format } from 'date-fns'
 import Task from './Task';
 import Project from './Project';
 import TodoList from './TodoList';
@@ -52,13 +51,6 @@ export default class UI {
             const thisWeekRange = getThisWeekRange(); // [start, end]
             const thisWeekProject = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
 
-
-            // // get tasks in thisWeekProject that has dueDate of today
-            // const wproject = todoList.find(thisWeekProject);
-            // if (wproject !== undefined) {
-            //     tasks = tasks.concat(wproject.getTodayTasks(todayProject));
-            // }
-
             // get tasks of that OWN project
             const tproject = todoList.find(todayProject);
             if (tproject !== undefined) {
@@ -71,13 +63,6 @@ export default class UI {
                     tasks = tasks.concat(prj.getTodayTasks(todayProject));
                 }
             })
-
-            // // scrape through Storage to find any more task that also has dueDate of within this week
-            // todoList.getProjects().forEach(prj => {
-            //     if (prj.isUserCreated()) {
-            //         tasks = tasks.concat(prj.getThisWeekTasks(thisWeekRange));
-            //     }
-            // })
             
 
             // display that data
@@ -88,12 +73,6 @@ export default class UI {
             const todayProject = getDateToday();
             const thisWeekRange = getThisWeekRange(); // [start, end]
             const thisWeekProject = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
-
-            // // get tasks of todayProject 
-            // const tProject = todoList.find(todayProject);
-            // if (tProject !== undefined) {
-            //     tasks = tProject.getTasks();
-            // }
 
             // get tasks of thisWeekProject
             const project = todoList.find(thisWeekProject);
@@ -204,14 +183,6 @@ export default class UI {
                 }
             });
 
-        // // submit via "enter"
-        // submitProjectButton.addEventListener("keypress", (event) => {
-        //     if (event.keyCode === 13) {
-        //         Storage.addProject(newProject.value);
-        //         UI.closeProjectFormPopup(event);
-        //     }
-        // })
-
         cancelProjectButton.addEventListener("click", UI.closeProjectFormPopup)
     }
 
@@ -235,7 +206,6 @@ export default class UI {
         const projectList = document.querySelectorAll(".group-1>div:not(.wrap), .group-2>div:not(.title)");
         console.log(projectList);
         projectList.forEach(project => project.addEventListener("click", () => {
-            // console.log("test", this);
             UI.deleteCurrentProjectContent();
             UI.loadTasks(project.textContent.trim());
             UI.createAddTaskButton();
@@ -380,8 +350,6 @@ export default class UI {
             priority = document.querySelector('input[type="radio"]:checked').value;
         }
         
-        // console.log(taskName, taskNotes, priority);
-
         if (title === "Today") {
             UI.addTasktoTodayProject(taskName, priority, taskNotes);
             UI.addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate);
@@ -406,14 +374,6 @@ export default class UI {
                 UI.processTaskFormSubmission();
                 UI.closeTaskFormPopup(event);
             });
-
-        // // submit via "enter"
-        // submitTaskButton.addEventListener("keypress", (event) => {
-        //     if (event.keyCode === 13) {
-        //         UI.processTaskFormSubmission();
-        //         UI.closeTaskFormPopup(event);
-        //     }
-        // })
 
         cancelTaskButton.addEventListener("click", UI.closeTaskFormPopup)
     }

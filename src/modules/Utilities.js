@@ -1,7 +1,9 @@
 import { subDays, addDays, format, isWithinInterval } from 'date-fns';
 
+// dueDate: yyyy-mm-dd
+// new Date("yyyy/mm/dd")
+// range: yyyy-mm/dd > yyyy-mm-dd
 
-// format: YYYY-MM-DD
 function getDateToday() {
     const today = new Date();
     let date = String(today.getDate()).padStart(2, '0');
@@ -11,7 +13,6 @@ function getDateToday() {
     return `${year}-${month}-${date}`;
 }
 
-// format: YYYY-MM-DD
 function getThisWeekRange() {
     const today = new Date(); 
     const day = String(today.getDay());
@@ -34,9 +35,6 @@ function isInInterval(dueDate, range) {
     const startDate = range[0].split("-");
     const endDate = range[1].split("-");
 
-    // dueDate: yyyy-mm-dd
-    // new Date("yyyy/mm/dd")
-    // range: yyyy-mm/dd > yyyy-mm-dd
     return isWithinInterval(
         new Date(`${date[0]}/${date[1]}/${date[2]}`),
         {
@@ -46,9 +44,9 @@ function isInInterval(dueDate, range) {
     )
 }
 
-
 // this regex is still not robust enough
 function isInvalidFormat(projectName) {
     return projectName.match(/([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/) === null;
 }
+
 export {getDateToday, getThisWeekRange, isInInterval, isInvalidFormat};

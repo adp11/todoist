@@ -35,7 +35,6 @@ export default class Storage {
 
     static addProject(projectName) {
         const todoList = Storage.getTodoList();
-        // const project = todoList.find(project)
         todoList.addProject(projectName);
         Storage.save(todoList);
     }

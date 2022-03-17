@@ -7,7 +7,6 @@ export default class Task {
         this.completed = false;
     }
 
-    
 }
 
 // code (event listeners not working for projects in group2)

@@ -3,7 +3,7 @@ import Task from './Task';
 import Project from './Project';
 import TodoList from './TodoList';
 import Storage from './Storage';
-import { getDateToday, getThisWeekRange, isInInterval } from './Utilities';
+import { getDateToday, getThisWeekRange, isInInterval, isInvalidFormat } from './Utilities';
 
 export default class UI {
 
@@ -19,6 +19,7 @@ export default class UI {
     }
 
     static loadProjects() {
+        console.log("data",Storage.getTodoList().getProjects());
         Storage.getTodoList().getProjects().forEach(project => {
             if (project.isUserCreated()) {
                 UI.createProject(project.getName()); // except "today, this week, wrap" ones - YYYY-MM-DD
@@ -48,15 +49,36 @@ export default class UI {
         let tasks = [];   
         if (currentProject.includes("Today")) {
             const todayProject = getDateToday();
+            const thisWeekRange = getThisWeekRange(); // [start, end]
+            const thisWeekProject = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
 
-            // get tasks of that OWN project
-            // const project = todoList.find(todayProject);
-            // if (project !== undefined) {
-            //     tasks = project.getTasks();
+
+            // // get tasks in thisWeekProject that has dueDate of today
+            // const wproject = todoList.find(thisWeekProject);
+            // if (wproject !== undefined) {
+            //     tasks = tasks.concat(wproject.getTodayTasks(todayProject));
             // }
 
+            // get tasks of that OWN project
+            const tproject = todoList.find(todayProject);
+            if (tproject !== undefined) {
+                tasks = tproject.getTasks();
+            }
+
             // scrape through Storage to find any more task that also has dueDate of today
-            todoList.getProjects().forEach(prj => tasks = tasks.concat(prj.getTodayTasks(todayProject)));
+            todoList.getProjects().forEach(prj => {
+                if (prj.isUserCreated()) {
+                    tasks = tasks.concat(prj.getTodayTasks(todayProject));
+                }
+            })
+
+            // // scrape through Storage to find any more task that also has dueDate of within this week
+            // todoList.getProjects().forEach(prj => {
+            //     if (prj.isUserCreated()) {
+            //         tasks = tasks.concat(prj.getThisWeekTasks(thisWeekRange));
+            //     }
+            // })
+            
 
             // display that data
             const main = document.querySelector(".main-content");
@@ -67,17 +89,24 @@ export default class UI {
             const thisWeekRange = getThisWeekRange(); // [start, end]
             const thisWeekProject = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
 
-            // get tasks of todayProject 
-            const tProject = todoList.find(todayProject);
-            if (tProject !== undefined) {
-                tasks = tProject.getTasks();
-            }
+            // // get tasks of todayProject 
+            // const tProject = todoList.find(todayProject);
+            // if (tProject !== undefined) {
+            //     tasks = tProject.getTasks();
+            // }
 
             // get tasks of thisWeekProject
-            const wProject = todoList.find(thisWeekProject);
-            if (wProject !== undefined) {
-                tasks = tasks.concat(wProject.getTasks());
+            const project = todoList.find(thisWeekProject);
+            if (project !== undefined) {
+                tasks = tasks.concat(project.getTasks());
             }
+
+            // scrape through Storage to find any more task that also has dueDate of within this week
+            todoList.getProjects().forEach(prj => {
+                if (prj.isUserCreated()) {
+                    tasks = tasks.concat(prj.getThisWeekTasks(thisWeekRange));
+                }
+            })
 
             // display that data
             const main = document.querySelector(".main-content");
@@ -166,17 +195,22 @@ export default class UI {
 
         // submit via click
         submitProjectButton.addEventListener("click", (event) => {
-                Storage.addProject(new Project(newProject.value));
-                UI.closeProjectFormPopup(event);
+                // prevent user-created projects that have this reserved name format of "yyyy-mm/dd"
+                if (isInvalidFormat(newProject.value)) {
+                    Storage.addProject(newProject.value);
+                    UI.closeProjectFormPopup(event);
+                } else {
+                    alert("This project name was already reserved. Please pick a new name.")
+                }
             });
 
-        // submit via "enter"
-        submitProjectButton.addEventListener("keypress", (event) => {
-            if (event.keyCode === 13) {
-                Storage.addProject(new Project(newProject.value));
-                UI.closeProjectFormPopup(event);
-            }
-        })
+        // // submit via "enter"
+        // submitProjectButton.addEventListener("keypress", (event) => {
+        //     if (event.keyCode === 13) {
+        //         Storage.addProject(newProject.value);
+        //         UI.closeProjectFormPopup(event);
+        //     }
+        // })
 
         cancelProjectButton.addEventListener("click", UI.closeProjectFormPopup)
     }
@@ -296,53 +330,70 @@ export default class UI {
         }
     }
 
+    static addTasktoTodayProject(taskName, taskNotes, priority) {
+        const todayProject = getDateToday();
+        const newTask = new Task(taskName, priority, taskNotes, todayProject);
+        Storage.addTask(todayProject, newTask);
+
+    }
+
+    static addTasktoThisWeekProject(taskName, taskNotes, priority, dueDate) {
+        const thisWeekRange = getThisWeekRange(); // [start, end]
+        const thisWeekProject = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
+
+        // Handle dueDate input if this fn is invoked as a side-effect of adding to TodayProject
+        if (dueDate === null) {
+            const dateToday = getDateToday();
+            const newTask = new Task(taskName, priority, taskNotes, dateToday);
+            Storage.addTask(thisWeekProject, newTask);
+
+        // Handle empty and out-of-range dueDate input 
+        } else if (dueDate.value === "" || isInInterval(dueDate.value, thisWeekRange)) {
+            const newTask = new Task(taskName, priority, taskNotes, dueDate.value);
+            Storage.addTask(thisWeekProject, newTask);
+
+        } else {
+            alert("Due date is not within this week.")
+            return;
+        }
+    }
+
+    static addTasktoUserCreatedProject(taskName, priority, taskNotes, dueDate) {
+        const targetProjectName = target.slice(20); // 20 is the length of "format_list_bulleted" 
+        const newTask = new Task(taskName, priority, taskNotes, dueDate.value);
+        Storage.addTask(targetProjectName, newTask);
+    }
+
     static processTaskFormSubmission() {
         const title = document.querySelector(".main-content>h1").textContent;  
         const taskName = document.querySelector("#task-name").value;
+        let priority = "";
         const taskNotes = document.querySelector("#task-notes").value;
+        const dueDate = document.querySelector("#dueDate");
+        const dateToday = getDateToday();
 
-        // User input validation
-        if (taskName === "") {
-            alert("Task name field is required.");
+        // Handle task name and priority input
+        if (taskName === "" || document.querySelector('input[type="radio"]:checked') === null) {
+            alert("Task name and/or priority fields are required.");
             return;
+        } else {
+            priority = document.querySelector('input[type="radio"]:checked').value;
         }
         
-        if (title !== "Today") {
-            const dueDate = document.querySelector("#dueDate").value;
-        }
-
-        if (document.querySelector('input[type="radio"]:checked') === null) {
-            alert("Priority field is required.");
-            return;
-        }
-        const priority = document.querySelector('input[type="radio"]:checked').value;
-        console.log(taskName, taskNotes, priority);
+        // console.log(taskName, taskNotes, priority);
 
         if (title === "Today") {
-            const todayProject = getDateToday();
-            const newTask = new Task(taskName, taskNotes, todayProject, priority);
-            // console.log("UI",newTask.name);
-            Storage.addTask(todayProject, newTask);
+            UI.addTasktoTodayProject(taskName, priority, taskNotes);
+            UI.addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate);
 
         } else if (title === "This week") {
-            console.log("???")
-            const thisWeekRange = getThisWeekRange(); // [start, end]
-            const thisWeekProject = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
-
-            // handle out-of-range dueDate
-            if (isInInterval(dueDate, thisWeekRange)) {
-                const newTask = new Task(taskName, taskNotes, dueDate, priority);
-                Storage.addTask(thisWeekProject, newTask);
-            } else {
-                alert("Due date is not within this week.")
-                return;
+            UI.addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate);
+            if (dueDate.value === dateToday) {
+                UI.addTasktoTodayProject(taskName, priority, taskNotes);
             }
 
         } else {
-
-            const targetProjectName = target.slice(20); // 20 is the length of "format_list_bulleted" 
-            const newTask = new Task(taskName, taskNotes, dueDate, priority);
-            Storage.addTask(targetProjectName, newTask);
+            UI.addTasktoUserCreatedProject(taskName, priority, taskNotes, dueDate);
         }
     }
 
@@ -356,13 +407,13 @@ export default class UI {
                 UI.closeTaskFormPopup(event);
             });
 
-        // submit via "enter"
-        submitTaskButton.addEventListener("keypress", (event) => {
-            if (event.keyCode === 13) {
-                UI.processTaskFormSubmission();
-                UI.closeTaskFormPopup(event);
-            }
-        })
+        // // submit via "enter"
+        // submitTaskButton.addEventListener("keypress", (event) => {
+        //     if (event.keyCode === 13) {
+        //         UI.processTaskFormSubmission();
+        //         UI.closeTaskFormPopup(event);
+        //     }
+        // })
 
         cancelTaskButton.addEventListener("click", UI.closeTaskFormPopup)
     }

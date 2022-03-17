@@ -33,9 +33,10 @@ export default class Storage {
         return todoList;
     }
 
-    static addProject(project) {
+    static addProject(projectName) {
         const todoList = Storage.getTodoList();
-        todoList.addProject(project);
+        // const project = todoList.find(project)
+        todoList.addProject(projectName);
         Storage.save(todoList);
     }
 
@@ -48,6 +49,7 @@ export default class Storage {
     static addTask(projectName, task) {
         const todoList = Storage.getTodoList();
         const project = todoList.find(projectName);
+        console.log("test",project)
         if (project !== undefined) {
             project.addTask(task);
             // console.log("storage",task.title);
@@ -69,15 +71,4 @@ export default class Storage {
 
 }
 
-
-
-// const todo = new TodoList();
-//         const t1 = new Task("Example1", "Some notes", new Date("2020/03/17"))
-//         const prj1 = new Project("23-07-2022");
-//         const t2 = new Task("Example2", "Some notes", new Date("2020/03/17"))
-//         const prj2 = new Project("example");
-//         prj1.addTask(t1);
-//         todo.addProject(prj1);
-//         prj2.addTask(t2);
-//         todo.addProject(prj2);
 

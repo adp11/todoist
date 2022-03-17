@@ -24,8 +24,10 @@ export default class Project {
         return this.tasks.find((t) => t.title === task.title);
     }
 
+    // task names within "this week" category must be unique
     addTask(task) {
-        if (this.find(task) !== undefined) {
+        const target = this.find(task);
+        if (target !== undefined && target.dueDate === task.dueDate) {
             // console.log("test",task.name);
             // console.log("test",this.find(task));
             alert("Task name already existed. Please pick a new name.");
@@ -35,7 +37,8 @@ export default class Project {
     }
 
     isUserCreated() {
-        return (this.getName().match(/(\d{4})-(\d{1,2})-(\d{1,2})/) === null );
+        // console.log("test",this)
+        return this.getName().match(/([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/) === null;
     }   
 
     getTodayTasks(dateToday) {

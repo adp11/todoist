@@ -1,4 +1,5 @@
-import { subDays, addDays, format } from 'date-fns';
+import { subDays, addDays, format, isWithinInterval } from 'date-fns';
+
 
 // format: YYYY-MM-DD
 function getDateToday() {
@@ -43,6 +44,11 @@ function isInInterval(dueDate, range) {
             end: new Date(`${endDate[0]}/${endDate[1]}/${endDate[2]}`),
         }
     )
-
 }
-export {getDateToday, getThisWeekRange, isInInterval};
+
+
+// this regex is still not robust enough
+function isInvalidFormat(projectName) {
+    return projectName.match(/([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/) === null;
+}
+export {getDateToday, getThisWeekRange, isInInterval, isInvalidFormat};

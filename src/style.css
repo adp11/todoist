@@ -76,12 +76,11 @@ body::-webkit-scrollbar {
     margin-bottom: 10px;
 }
 
-
 .project-form, .task-form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 10px;
+    gap: 20px;
+    /* padding: 10px; */
 }
 
 .project-form input[type="text"], .task-form input[type="text"] {
@@ -89,12 +88,71 @@ body::-webkit-scrollbar {
     border-radius: 10px;
     font-size: 1.5rem;
     border: 1px #333333 solid;
-    flex: 1;
+    /* flex: 1; */
 }
 
-.form-row>label, .form-row>input {
+.task-form {
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px #333333 solid;
+}
+
+.date-row>*, .prio-row>* {
     font-size: 1.5rem;
-    padding: 10px;
+}
+
+.date-row, .prio-row {
+    display: flex;
+    align-items: center;
+}
+
+.prio-row>span, .date-row>label {
+    font-weight: bold;
+    width: 80px;
+}
+
+.prio-row>input[type="radio"] {
+    width: 0;
+    height: 0;
+    margin: 0;
+}
+
+.prio-row>label {
+    padding: 5px 15px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-right: 10px;
+}
+
+.prio-row>label:nth-of-type(1) {
+    color: #008000;
+    border: 1px solid #008000;
+}
+
+#low-priority:checked + label, .prio-row>label:nth-of-type(1):hover {
+    color: #fff;
+    background-color: #008000;
+}
+
+.prio-row>label:nth-of-type(2) {
+    color: #ffa500;
+    border: 1px solid #ffa500;
+}
+
+#medium-priority:checked + label, .prio-row>label:nth-of-type(2):hover {
+    color: #fff;
+    background-color: #ffa500;
+}
+
+.prio-row>label:nth-of-type(3) {
+    color: #ff0000;
+    border: 1px solid #ff0000;
+}
+
+#high-priority:checked + label, .prio-row>label:nth-of-type(3):hover {
+    color: #fff;
+    background-color: #ff0000;
 }
 
 .form-buttons {
@@ -105,62 +163,126 @@ body::-webkit-scrollbar {
 .form-buttons > button {
     font-size: 1.5rem;
     padding: 10px 0;
-}
-
-
-
-.group-2>div:active {
-    background-color: red;
-}
-
-button:active {
-    background: red;
+    flex: 1;
 }
 
 .form-buttons>button {
     background-color: 
     #aaffaa;
     border-radius: 10px;
-    border: none;
+    border: 1px solid #77fc77;
     font-size: 1.5rem;
     flex: 1;
 }
 
+.form-buttons>button:last-child {
+    background-color: #ffbebe;
+    border: 1px solid #fc9a9a;
+}
+
+.form-buttons>button:last-child:hover {
+    cursor: pointer;
+    background-color: #fc9a9a;
+}
+
+.form-buttons>button:first-child:hover {
+    cursor: pointer;
+    background-color: #77fc77;
+}
 
 /* -------- */
 .main-content {
-    border: 1px black solid;
+    border: 1px blue solid;
     position: absolute;
     top: 15vh;
     left: 25%;
     width: 75%;
     height: calc(85vh - 50px);
     overflow: auto;
-    padding: 20px;
+    padding: 10px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.main-content h1 {
+.main-content h3 {
     font-size: 2.5rem;
     font-weight: bold; 
     margin: 20px 0; 
     padding: 0;
+    margin: 10px 0 0 0;
 }
 
-
-
-
-
 .task {
-    border: 1px black solid;
-    background-color: #dddddd;
+    color: #333333;
+    background-color: #eeeeee;
     display: flex;
     align-items: center;
     padding: 10px;
+    gap: 20px;
+    border-radius: 10px;
 }
 
 .task>* {
+    display: inline;
     border: 1px red solid;
 }
+
+.task:hover {
+    box-shadow: 0 3px 10px rgb(0 0 0 / 0.2);
+    cursor: pointer;
+}
+
+.task>*:not(span) {
+    font-size: 1.5rem;
+}
+
+.task>button {
+    padding: 5px 15px;
+    border-radius: 5px;
+    border: 1px solid #3ba395;
+    color: #3ba395;
+}
+
+.task>button:hover {
+    background-color: #3ba395;
+    color: #fff;
+    cursor: pointer;
+}
+
+.task>span:hover {
+    color: #3ba395;
+}
+
+.task>input:hover {
+    box-shadow: 0 3px 10px #3ba395;
+}
+
+.task>*:not(div):hover {
+    cursor: pointer;
+}
+
+.add-task-button {
+    display: flex;
+    align-items: center;
+    padding: 10px 10px;
+    font-size: 1.5rem;
+    border-radius: 10px;
+}
+
+.add-task-button:hover {
+    cursor: pointer;
+    background-color: #eeeeee;
+}
+
+.task input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+}
+
+
+
+/* ----- */
 
 footer {
     border: 1px violet solid;
@@ -181,8 +303,19 @@ a {
 }
 
 
-/* ----utitlity---- */
-.hidden {
-    display: none;
+/* ----utilities---- */
+.completed {
+    opacity: 0.3;
 }
 
+.low-prio {
+    border-left: 5px solid #008000;
+}
+
+.medium-prio {
+    border-left: 5px solid#ffa500;
+}
+
+.high-prio {
+    border-left: 5px solid #ff0000;
+}

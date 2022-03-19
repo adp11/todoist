@@ -45,8 +45,16 @@ function isInInterval(dueDate, range) {
 }
 
 // this regex is still not robust enough
-function isInvalidFormat(projectName) {
+function isValidFormat(projectName) {
     return projectName.match(/([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/) === null;
 }
 
-export {getDateToday, getThisWeekRange, isInInterval, isInvalidFormat};
+// title: "prjName (src)" OR "prjName"
+// titleComponents: [task title, optional task source]
+function extractComponents(title) {
+    let idx = title.indexOf("(");
+    return (idx!==-1) ? [title.substring(0, idx-1), title.substring(idx+1, title.length-1)]
+                      : [title]    
+}
+
+export {getDateToday, getThisWeekRange, isInInterval, isValidFormat, extractComponents};

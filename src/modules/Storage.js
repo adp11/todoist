@@ -48,25 +48,80 @@ export default class Storage {
     static addTask(projectName, task) {
         const todoList = Storage.getTodoList();
         const project = todoList.find(projectName);
-        console.log("test",project)
+        const length = todoList.getProjects().length;
+        let oldLength = 0;
+        let newLength = 0;
+        
+
         if (project !== undefined) {
+            oldLength = project.getTasks().length;
             project.addTask(task);
-            // console.log("storage",task.title);
+            newLength = project.getTasks().length;
+
         } else {
-            const length = todoList.getProjects().length;
-            // console.log(todoList.getProjects()[length-1]);
             todoList.addProject(projectName);
-            todoList.getProjects()[length].addTask(task);
+            const newProject = todoList.getProjects()[length];
+            oldLength = newProject.getTasks().length;
+            newProject.addTask(task);
+            newLength = newProject.getTasks().length;
         }
         
         Storage.save(todoList);
+        // console.log("in storage", oldLength, newLength)
+        return (oldLength !== newLength); // check if add was successful
+    }
+
+    static toggleTaskStatus(projectName, titleComponents, dueDate) {
+        const todoList = Storage.getTodoList();
+        console.log(titleComponents[0], "..", titleComponents[1]);
+
+        if (titleComponents.length===1) {
+            const project = todoList.find(projectName);
+            if (project!==undefined) {
+                const task = project.rawFind(titleComponents[0], dueDate);
+                task.completed = (task.completed===true) ? false : true;
+            }
+        } else {
+            const project = todoList.find(titleComponents[1]);
+            if (project!==undefined) {
+                const task = project.rawFind(titleComponents[0], dueDate);
+                task.completed = (task.completed===true) ? false : true;
+            }
+        }
+
+
+        // if (project !== undefined) {
+        //     const task = project.rawFind(titleComponents[0], dueDate);
+        //     if (task !== undefined) {
+        //         task.completed = (task.completed===true) ? false : true;
+        //     } else {
+        //         const project2 = todoList.find(titleComponents[1]);
+        //         console.log(project2<"name here??")
+        //         const task2 = project2.rawFind(titleComponents[0], dueDate);
+        //         task2.completed = (task2.completed===true) ? false : true;
+        //     }
+        // }
+
+        Storage.save(todoList);
     }
     
-    // static deleteTask(projectName, taskName) {
-    //     const todoList = Storage.getTodoList();
-    //     todoList.getProject(projectName).deleteTask(taskName);
-    //     Storage.save(todoList);
-    // }
+    static deleteTask(projectName, titleComponents, dueDate) {
+        const todoList = Storage.getTodoList();
+        const project = todoList.find(projectName);
+        // console.log(project);
+        if (project !== undefined) {
+            const targetIndex = project.rawFindIndex(titleComponents[0], dueDate);
+            if (targetIndex !== -1) {
+                project.getTasks().splice(targetIndex, 1);
+            } else {
+                const project2 = todoList.find(titleComponents[1]);
+                const targetIndex2 = project2.rawFindIndex(titleComponents[0], dueDate);
+                project2.getTasks().splice(targetIndex2, 1);
+            }
+            // console.log("tobe removed", project.getTasks(),targetIndex);
+        }
+        Storage.save(todoList);
+    }
 
 }
 

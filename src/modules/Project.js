@@ -20,9 +20,29 @@ export default class Project {
         this.tasks = tasks;
     }
 
+    // 'task' parameter must be a Task object
     find(task) {
         return this.tasks.find((t) => t.title === task.title);
     }
+
+    // required parameters are pure strings
+    // return values: a Task object
+    rawFind(taskName, dueDate) {
+        return this.tasks.find((t) =>
+            // console.log(t.title, taskName);
+            // console.log(t.dueDate, dueDate);
+            (t.title===taskName && t.dueDate===dueDate))
+    }
+
+    // required parameters are pure strings
+    // return values: index of Task object
+    rawFindIndex(taskName, dueDate) {
+        return this.tasks.findIndex((t) =>
+            // console.log(t.title, taskName);
+            // console.log(t.dueDate, dueDate);
+            (t.title===taskName && t.dueDate===dueDate))
+    }
+
 
     addTask(task) {
         const target = this.find(task);
@@ -46,3 +66,32 @@ export default class Project {
         return thisWeekTasks;        
     }
 }
+
+// if (title === "Today") {
+//     // only do the second add if the first add was successful
+//     if (UI.addTasktoTodayProject(taskName, priority, taskNotes)) {
+//         UI.addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate);
+//     }
+
+// } else if (title === "This week") {
+//     UI.addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate);
+//     if (dueDate.value === dateToday) {
+//         UI.addTasktoTodayProject(taskName, priority, taskNotes);
+//     }
+
+// } else {
+//     UI.addTasktoUserCreatedProject(title, taskName, priority, taskNotes, dueDate);
+// }
+
+// // get tasks of that OWN project
+// const tproject = todoList.find(todayProject);
+// if (tproject !== undefined) {
+//     tasks = tproject.getTasks();
+// }
+
+// // scrape through Storage to find any more task that also has dueDate of today
+// todoList.getProjects().forEach(prj => {
+//     if (prj.isUserCreated()) {
+//         tasks = tasks.concat(prj.getTodayTasks(todayProject));
+//     }
+// })

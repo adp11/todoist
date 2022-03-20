@@ -58,3 +58,4 @@ function extractComponents(title) {
 }
 
 export {getDateToday, getThisWeekRange, isInInterval, isValidFormat, extractComponents};
+

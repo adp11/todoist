@@ -4,7 +4,7 @@ import TodoList from './TodoList';
 import Storage from './Storage';
 import { getDateToday, getThisWeekRange, isInInterval, isValidFormat, extractComponents } from './Utilities';
 
-// positions of items inside every ".task" element
+// positions of buttons inside every ".task" element
 const CHECKBOX = 0;
 const TITLE = 1;
 const DUE = 2;
@@ -14,89 +14,6 @@ const DELETE = 5;
 
 export default class UI {
 
-    // EVENT LISTENERS FOR TASKS
-    static attachTaskListeners() {
-        const projectName = document.querySelector(".main-content>h3").textContent;
-        const taskList = document.querySelectorAll(".main-content>.task");
-        taskList;
-        // const inputs = document.querySelectorAll('.main-content>.task>input[type="checkbox"]');
-        // const notes = document.querySelectorAll('.main-content>.task>button');
-        // const edits = document.querySelectorAll('.main-content>.task>.edit');
-        // const deletes = document.querySelectorAll('.main-content>.task>.delete');
-        
-        
-        taskList.forEach(task => {
-            const taskButtons = task.children;
-
-            taskButtons[CHECKBOX].addEventListener("click", () => {
-                UI.toggleTaskStatus(taskButtons);
-                UI.deleteCurrentProjectContent();
-                UI.openProject(projectName);
-            });
-
-            // task[NOTES].addEventListener("click", );
-            // task[EDIT].addEventListener("click", );
-            taskButtons[DELETE].addEventListener("click", () => {
-                UI.deleteTask(taskButtons);
-                UI.deleteCurrentProjectContent();
-                UI.openProject(projectName);
-            });
-        })
-    }
-
-    static deleteTask(task) {
-        const projectName = document.querySelector(".main-content>h3").textContent;
-        // console.log(projectName, task[TITLE].textContent, task[DUE].textContent)
-
-        // task[TITLE]: "prjName (src)" OR "prjName"
-        // titleComponents: [task title, optional task source/ projectName]
-        const titleComponents = extractComponents(task[TITLE].textContent);
-
-        if (projectName==="Today") {
-            Storage.deleteTask(getDateToday(), titleComponents, task[DUE].textContent)
-
-        } else if (projectName==="This week") {
-            const thisWeekRange = getThisWeekRange();
-            const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
-            Storage.deleteTask(thisWeekProjectName, titleComponents, task[DUE].textContent)
-
-        } else {
-            Storage.deleteTask(projectName, titleComponents, task[DUE].textContent)
-        }
-    }
-
-    static toggleTaskStatus(task) {
-        const projectName = document.querySelector(".main-content>h3").textContent;
-        const titleComponents = extractComponents(task[TITLE].textContent);
-
-        if (projectName==="Today" && titleComponents.length===1) {
-            const thisWeekRange = getThisWeekRange();
-            const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
-
-            Storage.toggleTaskStatus(getDateToday(), titleComponents, task[DUE].textContent);
-            Storage.toggleTaskStatus(thisWeekProjectName, titleComponents, task[DUE].textContent);
-
-        } else if (projectName==="Today" && titleComponents.length===2) {
-            Storage.toggleTaskStatus(projectName, titleComponents, task[DUE].textContent);
-            
-        } else if (projectName==="This week" && titleComponents.length===1) {
-            const thisWeekRange = getThisWeekRange();
-            const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
-
-            Storage.toggleTaskStatus(thisWeekProjectName, titleComponents, task[DUE].textContent)
-            if (task[DUE].textContent===getDateToday()) {
-                Storage.toggleTaskStatus(getDateToday(), titleComponents, task[DUE].textContent);
-            }
-
-        } else if (projectName==="This week" && titleComponents.length===2) {
-            Storage.toggleTaskStatus(projectName, titleComponents, task[DUE].textContent);
-
-        } else {
-            Storage.toggleTaskStatus(projectName, titleComponents, task[DUE].textContent)
-        }
-    }
-
-
     // LOADING CONTENT
     static loadHomepage() {
 
@@ -105,7 +22,6 @@ export default class UI {
         UI.createAddProjectButton();
         UI.attachProjectListeners();
         UI.attachAddProjectButtonListeners();
-
         UI.openProject();
         UI.attachTaskListeners();
     }
@@ -150,7 +66,6 @@ export default class UI {
                 if (prj.isUserCreated()) {
                     const extraTasks = prj.getTodayTasks(todayProject);
                     const modifiedExtraTasks = extraTasks.map(extraTask => [extraTask, prj.getName()]); // Add source of this extra scraped task for display purpose in loadTasks()
-
                     tasks = tasks.concat(modifiedExtraTasks);
                 }
             })
@@ -191,11 +106,9 @@ export default class UI {
             main.innerHTML += `<h3>This week</h3>`;
 
         } else {
-
             // project name can be extracted from title of ".main-content" or "sidebar"
             const targetProjectName = (projectName.includes("format_list_bulleted")) ? projectName.slice(20) : projectName; // 20 is the length of "format_list_bulleted" 
         
-
             // get tasks of that user-created project
             const project = todoList.find(targetProjectName);
             if (project !== undefined) {
@@ -248,6 +161,7 @@ export default class UI {
                     <span class="material-icons-round">delete</span>
                 </div>`;
             }
+
         } else {
             if (task[0].completed) {
                 main.innerHTML += `
@@ -376,127 +290,180 @@ export default class UI {
         }));
     }
 
+    /* Popup from edit OR submit
+    1. Error in (((taskHTML!==null) && (taskHTML.contains(event.target))) ||  (taskHTML!==null)) ==> createPopup, attachPopupButton (closePopup, submit/save Popup)
+    2. Isolate submission and save features. Make the others work first.
+    */
 
     // EVENT LISTENERS FOR "ADD TASK" BUTTON
-    static createTaskFormPopup() {
+    static attachAddTaskButtonListeners() {
+        const addButton = document.querySelector(".add-task-button");
+        addButton.addEventListener("click", (event) => {
+            UI.createTaskFormPopup(event);
+            UI.attachTaskFormButtonListeners(event);
+        });
+    }
+
+    static createTaskFormPopup(event, task=null, position=0) {
+        const taskHTML = document.querySelector(".task");
+        const main = document.querySelector(".main-content");
         const title = document.querySelector(".main-content>h3").textContent; 
-        const addTaskButton = document.querySelector(".add-task-button");
-        addTaskButton.style.display="none";
-        const taskList = document.querySelector(".main-content");
+        console.log(taskHTML.contains(event.target));
 
-        if (title === "Today") {
-            taskList.innerHTML += `
-            <div class="task-form">
-                <input type="text" id="task-name" name="task-name" placeholder="*Task name">
+        if (((taskHTML!==null) && (taskHTML.contains(event.target))) ||  (taskHTML!==null)) {
+            const editForm = document.createElement("div");
+            editForm.classList.add("edit-form");
 
-                <input type="text" id="task-notes" name="task-notes" placeholder="Notes">
+            if (title === "Today") {
+                editForm.innerHTML += `
+                <div class="edit-form">
+                    <label>New task name: <input type="text" id="task-name" name="task-name" value="${task[TITLE].textContent}"></label>
 
-                <div class="prio-row">
-                    <span>*Priority:</span>
-                    <input type="radio" id="low-priority" name="priority" value="low">
-                    <label for="low-priority"> Low</label>
-            
-                    <input type="radio" id="medium-priority" name="priority" value="medium">
-                    <label for="medium-priority"> Medium</label>
-            
-                    <input type="radio" id="high-priority" name="priority" value="high">
-                    <label for="high-priority"> High</label>
-                </div>
-                <div class="form-buttons">
-                    <button>Add</button>
-                    <button>Cancel</button>
-                </div>
-            <div>`; 
+                    <label>New notes: <input type="text" id="task-notes" name="task-notes" value="${task[NOTES].textContent}"></label>
 
-        } else {
-            taskList.innerHTML += `
-            <div class="task-form">
-                <input type="text" id="task-name" name="task-name" placeholder="*Task name">
-
-                <input type="text" id="task-notes" name="task-notes" placeholder="Notes">
+                    <div class="prio-row">
+                        <span>*New priority:</span>
+                        <input type="radio" id="low-priority" name="priority" value="low">
+                        <label for="low-priority"> Low</label>
                 
-                <div class="date-row">
-                    <label for="dueDate">Due date: </label>
-                    <input type="date" id="dueDate" name="dueDate">
-                </div>
+                        <input type="radio" id="medium-priority" name="priority" value="medium">
+                        <label for="medium-priority"> Medium</label>
+                
+                        <input type="radio" id="high-priority" name="priority" value="high">
+                        <label for="high-priority"> High</label>
+                    </div>
+                    <div class="form-buttons">
+                        <button>Save</button>
+                        <button>Cancel</button>
+                    </div>
+                <div>`;
+    
+            } else {
+                editForm.innerHTML += `
+                <div class="edit-form">
+                    <label>New task name: <input type="text" id="task-name" name="task-name" value="${task[TITLE].textContent}"></label>
 
-                <div class="prio-row">
-                    <span>*Priority:</span>
-                    <input type="radio" id="low-priority" name="priority" value="low">
-                    <label for="low-priority"> Low</label>
-            
-                    <input type="radio" id="medium-priority" name="priority" value="medium">
-                    <label for="medium-priority"> Medium</label>
-            
-                    <input type="radio" id="high-priority" name="priority" value="high">
-                    <label for="high-priority"> High</label>
-                </div>
-                <div class="form-buttons">
-                    <button>Add</button>
-                    <button>Cancel</button>
-                </div>
-            <div>`; 
-        }
-    }
+                    <label>New notes: <input type="text" id="task-notes" name="task-notes" value="${task[NOTES].textContent}"></label>
 
-    static closeTaskFormPopup(event) {
-        const taskForm = document.querySelector(".task-form");
-        const addTaskButton = document.querySelector(".add-task-button");
-        const submitTaskButton = document.querySelector(".task-form>.form-buttons>button:first-child");   
-        const cancelTaskButton = document.querySelector(".task-form>.form-buttons>button:last-child");
-        const main = document.querySelectorAll(".main-content>*"); 
-        const projectName = document.querySelector(".main-content>h3").textContent.trim();
+                    <div class="date-row">
+                        <label for="dueDate">Due date: </label>
+                        <input type="date" id="dueDate" name="dueDate" value="${task[DUE].textContent}">
+                    </div>
 
-        if (event.target === submitTaskButton) {
-            main.forEach(task => task.remove());
-            UI.loadTasks(projectName);
-            UI.createAddTaskButton();
-            UI.attachTaskListeners();
-            UI.attachAddTaskButtonListeners();
+                    <div class="prio-row">
+                        <span>*New priority:</span>
+                        <input type="radio" id="low-priority" name="priority" value="low">
+                        <label for="low-priority"> Low</label>
+                
+                        <input type="radio" id="medium-priority" name="priority" value="medium">
+                        <label for="medium-priority"> Medium</label>
+                
+                        <input type="radio" id="high-priority" name="priority" value="high">
+                        <label for="high-priority"> High</label>
+                    </div>
 
-        } else if (event.target === cancelTaskButton) {
-            taskForm.remove();
-            addTaskButton.style.display = "flex";
-            UI.attachAddTaskButtonListeners(); // attach again because losing listeners when being applied "display: none"
-        }
-    }
-
-    static addTasktoTodayProject(taskName, priority, taskNotes) {
-        const todayProject = getDateToday();
-        const newTask = new Task(taskName, priority, taskNotes, todayProject);
-        const succeeded = Storage.addTask(todayProject, newTask);
-        console.log("work today", succeeded)
-        return succeeded;
-    }
-
-    static addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate) {
-        const thisWeekRange = getThisWeekRange();
-        const thisWeekProject = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
-        let succeeded = false;
-        console.log("work week")
-        // Handle dueDate input if this fn is invoked as a side-effect of adding to TodayProject
-        if (dueDate === null) {
-            const dateToday = getDateToday();
-            const newTask = new Task(taskName, priority, taskNotes, dateToday);
-            // console.log("why???")
-            succeeded = Storage.addTask(thisWeekProject, newTask);
-
-        // Handle empty and out-of-range dueDate input 
-        } else if (dueDate.value === "" || isInInterval(dueDate.value, thisWeekRange)) {
-            const newTask = new Task(taskName, priority, taskNotes, dueDate.value);
-            succeeded = Storage.addTask(thisWeekProject, newTask);
+                    <div class="form-buttons">
+                        <button>Save</button>
+                        <button>Cancel</button>
+                    </div>
+                <div>`;
+            }
+            main.insertBefore(editForm, main.children[position+2]);
 
         } else {
-            alert("Due date is not within this week.")
+            const taskList = document.querySelector(".main-content");
+            const addTaskButton = document.querySelector(".add-task-button");
+            addTaskButton.style.display="none";
+
+            if (title === "Today") {
+                taskList.innerHTML += `
+                <div class="task-form">
+                    <input type="text" id="task-name" name="task-name" placeholder="*Task name">
+    
+                    <input type="text" id="task-notes" name="task-notes" placeholder="Notes">
+    
+                    <div class="prio-row">
+                        <span>*Priority:</span>
+                        <input type="radio" id="low-priority" name="priority" value="low">
+                        <label for="low-priority"> Low</label>
+                
+                        <input type="radio" id="medium-priority" name="priority" value="medium">
+                        <label for="medium-priority"> Medium</label>
+                
+                        <input type="radio" id="high-priority" name="priority" value="high">
+                        <label for="high-priority"> High</label>
+                    </div>
+                    <div class="form-buttons">
+                        <button>Add</button>
+                        <button>Cancel</button>
+                    </div>
+                <div>`; 
+    
+            } else {
+                taskList.innerHTML += `
+                <div class="task-form">
+                    <input type="text" id="task-name" name="task-name" placeholder="*Task name">
+    
+                    <input type="text" id="task-notes" name="task-notes" placeholder="Notes">
+                    
+                    <div class="date-row">
+                        <label for="dueDate">Due date: </label>
+                        <input type="date" id="dueDate" name="dueDate">
+                    </div>
+    
+                    <div class="prio-row">
+                        <span>*Priority:</span>
+                        <input type="radio" id="low-priority" name="priority" value="low">
+                        <label for="low-priority"> Low</label>
+                
+                        <input type="radio" id="medium-priority" name="priority" value="medium">
+                        <label for="medium-priority"> Medium</label>
+                
+                        <input type="radio" id="high-priority" name="priority" value="high">
+                        <label for="high-priority"> High</label>
+                    </div>
+                    <div class="form-buttons">
+                        <button>Add</button>
+                        <button>Cancel</button>
+                    </div>
+                <div>`; 
+            }
         }
-
-        return succeeded;
     }
+    
+    static attachTaskFormButtonListeners(event) {
+        const task = document.querySelector(".task");
 
-    static addTasktoUserCreatedProject(projectName, taskName, priority, taskNotes, dueDate) {
-        // const targetProjectName = target.slice(20); // 20 is the length of "format_list_bulleted" 
-        const newTask = new Task(taskName, priority, taskNotes, dueDate.value);
-        Storage.addTask(projectName, newTask);
+        if ((task!==null && task.contains(event.target)) || (task!==null)) {
+            const saveEditButton = document.querySelector(".edit-form>.form-buttons>button:first-child");   
+            const cancelEditButton = document.querySelector(".edit-form>.form-buttons>button:last-child");
+
+            // submit via click
+            saveEditButton.addEventListener("click", (event) => {
+                const currentEditForm = document.querySelector(".task-form");
+                if (currentEditForm!==null) currentEditForm.remove();
+
+                UI.processTaskFormSubmission();
+                UI.closeTaskFormPopup(event);
+            });
+
+            cancelEditButton.addEventListener("click", UI.closeTaskFormPopup);
+
+        } else {
+            const submitTaskButton = document.querySelector(".task-form>.form-buttons>button:first-child");   
+            const cancelTaskButton = document.querySelector(".task-form>.form-buttons>button:last-child");
+
+            // submit via click
+            submitTaskButton.addEventListener("click", (event) => {
+                const currentTaskForm = document.querySelector(".edit-form");
+                if (currentTaskForm!==null) currentTaskForm.remove();
+
+                UI.processTaskFormSubmission();
+                UI.closeTaskFormPopup(event);
+            });
+
+            cancelTaskButton.addEventListener("click", UI.closeTaskFormPopup);
+        }
     }
 
     static processTaskFormSubmission() {
@@ -538,32 +505,226 @@ export default class UI {
         }
     }
 
-    static attachTaskFormButtonListeners() {
-        const submitTaskButton = document.querySelector(".task-form>.form-buttons>button:first-child");   
-        const cancelTaskButton = document.querySelector(".task-form>.form-buttons>button:last-child");
+    static addTasktoTodayProject(taskName, priority, taskNotes) {
+        const todayProject = getDateToday();
+        const newTask = new Task(taskName, priority, taskNotes, todayProject);
+        const succeeded = Storage.addTask(todayProject, newTask);
+        console.log("work today", succeeded)
+        return succeeded;
+    }
 
-        // submit via click
-        submitTaskButton.addEventListener("click", (event) => {
-                UI.processTaskFormSubmission();
-                UI.closeTaskFormPopup(event);
+    static addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate) {
+        const thisWeekRange = getThisWeekRange();
+        const thisWeekProject = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
+        let succeeded = false;
+        console.log("work week")
+        // Handle dueDate input if this fn is invoked as a side-effect of adding to TodayProject
+        if (dueDate === null) {
+            const dateToday = getDateToday();
+            const newTask = new Task(taskName, priority, taskNotes, dateToday);
+            // console.log("why???")
+            succeeded = Storage.addTask(thisWeekProject, newTask);
+
+        // Handle empty and out-of-range dueDate input 
+        } else if (dueDate.value === "" || isInInterval(dueDate.value, thisWeekRange)) {
+            const newTask = new Task(taskName, priority, taskNotes, dueDate.value);
+            succeeded = Storage.addTask(thisWeekProject, newTask);
+
+        } else {
+            alert("Due date is not within this week.")
+        }
+
+        return succeeded;
+    }
+
+    static addTasktoUserCreatedProject(projectName, taskName, priority, taskNotes, dueDate) {
+        // const targetProjectName = target.slice(20); // 20 is the length of "format_list_bulleted" 
+        const newTask = new Task(taskName, priority, taskNotes, dueDate.value);
+        Storage.addTask(projectName, newTask);
+    }
+    
+    static closeTaskFormPopup(event) {
+        const task = document.querySelector(".task");
+        const taskForm = document.querySelector(".task-form");
+        const addTaskButton = document.querySelector(".add-task-button");
+        const main = document.querySelectorAll(".main-content>*"); 
+        const projectName = document.querySelector(".main-content>h3").textContent.trim();
+
+        if ((task!==null && !task.contains(addTaskButton)) &&  (task!==null)) {
+            const saveEditButton = document.querySelector(".edit-form>.form-buttons>button:first-child");   
+            const cancelEditButton = document.querySelector(".edit-form>.form-buttons>button:last-child");
+
+            if (event.target === saveEditButton) {
+                main.forEach(task => task.remove());
+                UI.loadTasks(projectName);
+                UI.createAddTaskButton();
+                UI.attachTaskListeners();
+                UI.attachAddTaskButtonListeners();
+    
+            } else if (event.target === cancelEditButton) {
+                editForm.remove();
+            }
+
+        } else {
+            const submitTaskButton = document.querySelector(".task-form>.form-buttons>button:first-child");   
+            const cancelTaskButton = document.querySelector(".task-form>.form-buttons>button:last-child");
+            if (event.target === submitTaskButton) {
+                main.forEach(task => task.remove());
+                UI.loadTasks(projectName);
+                UI.createAddTaskButton();
+                UI.attachTaskListeners();
+                UI.attachAddTaskButtonListeners();
+    
+            } else if (event.target === cancelTaskButton) {
+                taskForm.remove();
+                addTaskButton.style.display = "flex";
+                UI.attachAddTaskButtonListeners(); // attach again because losing listeners when being applied "display: none"
+                UI.attachTaskListeners();
+            }
+        }
+    }
+    
+
+    // EVENT LISTENERS FOR TASKS
+    static attachTaskListeners() {
+        const projectName = document.querySelector(".main-content>h3").textContent;
+        const taskList = document.querySelectorAll(".main-content>.task");
+        taskList;
+        
+        taskList.forEach((task, idx) => {
+            const taskButtons = task.children;
+            
+            // EVENT LISTENERS FOR TOGGLE
+            taskButtons[CHECKBOX].addEventListener("click", () => {
+                UI.toggleTaskStatus(taskButtons);
+                UI.deleteCurrentProjectContent();
+                UI.openProject(projectName);
             });
 
-        cancelTaskButton.addEventListener("click", UI.closeTaskFormPopup)
+            // EVENT LISTENERS FOR NOTES
+            taskButtons[NOTES].addEventListener("click", (event) => {
+                UI.deleteCurrentNotesPopup();
+                UI.openNotesPopup(taskButtons, idx);
+                event.stopImmediatePropagation(); // duct tape
+                UI.attachNotesPopupClose();
+
+            });
+            
+            // EVENT LISTENERS FOR EDIT
+            taskButtons[EDIT].addEventListener("click", (event) => {
+                UI.createTaskFormPopup(event, taskButtons, idx);
+                event.stopImmediatePropagation(); // duct tape
+                UI.attachTaskFormButtonListeners(event)
+            });
+
+            // EVENT LISTENERS FOR DELETE
+            taskButtons[DELETE].addEventListener("click", () => {
+                UI.deleteTask(taskButtons);
+                UI.deleteCurrentProjectContent();
+                UI.openProject(projectName);
+            });
+        })
     }
 
-    static attachAddTaskButtonListeners() {
-        const addButton = document.querySelector(".main-content>div:last-of-type");
-        addButton.addEventListener("click", () => {
-            UI.createTaskFormPopup();
-            UI.attachTaskFormButtonListeners();
-        });
+    // HELPER FUNCTIONS FOR TASK TOGGLE
+    static toggleTaskStatus(task) {
+        const projectName = document.querySelector(".main-content>h3").textContent;
+        const titleComponents = extractComponents(task[TITLE].textContent);
+
+        if (projectName==="Today" && titleComponents.length===1) {
+            const thisWeekRange = getThisWeekRange();
+            const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
+
+            Storage.toggleTaskStatus(getDateToday(), titleComponents, task[DUE].textContent);
+            Storage.toggleTaskStatus(thisWeekProjectName, titleComponents, task[DUE].textContent);
+
+        } else if (projectName==="This week" && titleComponents.length===1) {
+            const thisWeekRange = getThisWeekRange();
+            const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
+
+            Storage.toggleTaskStatus(thisWeekProjectName, titleComponents, task[DUE].textContent)
+            if (task[DUE].textContent===getDateToday()) {
+                Storage.toggleTaskStatus(getDateToday(), titleComponents, task[DUE].textContent);
+            }
+
+        } else {
+            Storage.toggleTaskStatus(projectName, titleComponents, task[DUE].textContent)
+        }
+    }
+
+    
+    // HELPER FUNCTIONS FOR TASK NOTES
+    static deleteCurrentNotesPopup() {
+        const currentPopup = document.querySelector(".main-content>.notes-form");
+        if (currentPopup!==null) currentPopup.remove();
+    }
+
+    static openNotesPopup(task, position) {
+        const projectName = document.querySelector(".main-content>h3").textContent;
+        const titleComponents = extractComponents(task[TITLE].textContent);
+
+        if (projectName==="Today" && titleComponents.length===1) {
+            const [notes, status] = Storage.getNotes(getDateToday(), titleComponents, task[DUE].textContent);
+            UI.createNotesPopup(notes, position, status);
+
+        } else if (projectName==="This week" && titleComponents.length===1) { 
+            const thisWeekRange = getThisWeekRange();
+            const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
+
+            const [notes, status] = Storage.getNotes(thisWeekProjectName, titleComponents, task[DUE].textContent);
+            UI.createNotesPopup(notes, position, status);
+
+        } else {
+            const [notes, status] = Storage.getNotes(projectName, titleComponents, task[DUE].textContent);
+            UI.createNotesPopup(notes, position, status);
+        }
+    }
+
+    static createNotesPopup(notes, position, taskStatus) {
+        const main = document.querySelector(".main-content");
+        const notesForm = document.createElement("div");
+        
+        notesForm.classList.add("notes-form");
+        notesForm.innerHTML += `
+                <div class="material-icons-outlined notes-popup-close" style="font-size: 2rem;">close</div>
+                <div class="notes-box"><span style="font-weight: bold; font-size: 1.5rem;">Notes:</span> ${notes}</div>`;
+
+        main.insertBefore(notesForm, main.children[position+2]);
+
+        if (taskStatus!==false) {
+            notesForm.classList.add("completed");
+        }
+    }
+
+    static attachNotesPopupClose() {
+        const popupClose = document.querySelector(".notes-popup-close");
+        popupClose.addEventListener("click", UI.deleteCurrentNotesPopup)
     }
 
 
-    // // EVENT LISTENERS FOR TASKS
-    // static attachTaskListeners() {
-    //     const taskList = document.querySelectorAll(".main-content>.task");
-    //     taskList;
-    //     console.log(taskList);
-    // }
+    // HELPER FUNCTIONS FOR TASK DELETE
+    static deleteTask(task) {
+        const projectName = document.querySelector(".main-content>h3").textContent;
+        const titleComponents = extractComponents(task[TITLE].textContent);
+
+        if (projectName==="Today" && titleComponents.length===1) {
+            const thisWeekRange = getThisWeekRange();
+            const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
+
+            Storage.deleteTask(getDateToday(), titleComponents, task[DUE].textContent);
+            Storage.deleteTask(thisWeekProjectName, titleComponents, task[DUE].textContent);
+
+        } else if (projectName==="This week" && titleComponents.length===1) {
+            const thisWeekRange = getThisWeekRange();
+            const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
+
+            Storage.deleteTask(thisWeekProjectName, titleComponents, task[DUE].textContent)
+            if (task[DUE].textContent===getDateToday()) {
+                Storage.deleteTask(getDateToday(), titleComponents, task[DUE].textContent);
+            }
+
+        } else {
+            Storage.deleteTask(projectName, titleComponents, task[DUE].textContent)
+        }
+    }
 }

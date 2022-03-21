@@ -1,5 +1,3 @@
-import Task from './Task';
-import isWithinInterval from 'date-fns/isWithinInterval';
 import { isInInterval } from './Utilities';
 
 export default class Project {
@@ -38,7 +36,6 @@ export default class Project {
         return this.tasks.findIndex((t) =>
             (t.title===taskName && t.dueDate===dueDate))
     }
-
 
     addTask(task) {
         const target = this.find(task);

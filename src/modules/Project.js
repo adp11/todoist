@@ -49,6 +49,10 @@ export default class Project {
         }
     }
 
+    deleteTask(index) {
+        this.getTasks().splice(index, 1);
+    }
+
     isUserCreated() {
         return this.getName().match(/([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]))/) === null;
     }   

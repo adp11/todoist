@@ -90,16 +90,13 @@ export default class UI {
                     const modifiedExtraTasks = extraTasks.map(extraTask => [extraTask, prj.getName()]); // Add source of this extra scraped task for display purpose in loadTasks()
 
                     tasks = tasks.concat(modifiedExtraTasks);
-                    console.log("almost?", prj.getTasks()[0]);
                 }
             })
 
             // Second, get tasks of thisWeekProject
             const project = todoList.find(thisWeekProject);
             if (project !== undefined) {
-                // console.log(tasks, "test 1");
                 tasks = tasks.concat(project.getTasks().map(task => [task]));
-                // console.log(tasks, "test 2");
             }
 
             const main = document.querySelector(".main-content");
@@ -142,7 +139,7 @@ export default class UI {
                     <label>${task[0].title}</label>
                     <div class="date" style="margin-left: auto;">${task[0].dueDate}</div>
                     <button >Notes</button>
-                    <span class="material-icons-round">edit</span>
+                    <span class="material-icons-outlined">edit</span>
                     <span class="material-icons-round">delete</span>
                 </div>`;
     
@@ -157,7 +154,7 @@ export default class UI {
                     <label>${task[0].title}</label>
                     <div class="date" style="margin-left: auto;">${task[0].dueDate}</div>
                     <button >Notes</button>
-                    <span class="material-icons-round">edit</span>
+                    <span class="material-icons-outlined">edit</span>
                     <span class="material-icons-round">delete</span>
                 </div>`;
             }
@@ -170,7 +167,7 @@ export default class UI {
                     <label>${task[0].title} (${task[1]})</label>
                     <div class="date" style="margin-left: auto;">${task[0].dueDate}</div>
                     <button >Notes</button>
-                    <span class="material-icons-round">edit</span>
+                    <span class="material-icons-outlined">edit</span>
                     <span class="material-icons-round">delete</span>
                 </div>`;
     
@@ -185,7 +182,7 @@ export default class UI {
                     <label>${task[0].title} (${task[1]})</label>
                     <div class="date" style="margin-left: auto;">${task[0].dueDate}</div>
                     <button >Notes</button>
-                    <span class="material-icons-round">edit</span>
+                    <span class="material-icons-outlined">edit</span>
                     <span class="material-icons-round">delete</span>
                 </div>`;
             }
@@ -218,7 +215,7 @@ export default class UI {
                 </div>
             <div>`; 
 
-        UI.attachProjectListeners(); // attach again because event listeners for projects got lost as a result of using "innerHTML +="
+        
     }
 
     static closeProjectFormPopup(event) {
@@ -250,7 +247,6 @@ export default class UI {
         // submit via click
         submitProjectButton.addEventListener("click", (event) => {
                 // prevent user-created projects that have this reserved name format of "yyyy-mm/dd"
-                // console.log(newProject.value, newProject.value.trim());
                 if (newProject.value.trim() === "" || /[(,)]/.test(newProject.value.trim())) {
                     alert("Project name must not be empty and/or not include '(' or ')'.")
                 } else if (isValidFormat(newProject.value)) {
@@ -268,6 +264,7 @@ export default class UI {
         const addButton = document.querySelector(".group-2>div:last-of-type");
         addButton.addEventListener("click", () => {
             UI.createProjectFormPopup();
+            UI.attachProjectListeners(); // attach again because event listeners for projects got lost as a result of using "innerHTML +=" above
             UI.attachProjectFormButtonListeners();
         });
     }
@@ -299,30 +296,33 @@ export default class UI {
     static attachAddTaskButtonListeners() {
         const addButton = document.querySelector(".add-task-button");
         addButton.addEventListener("click", (event) => {
+            UI.deleteCurrentNotesPopup();// newly added
+            UI.deleteCurrentTaskFormPopup(); // newly added
             UI.createTaskFormPopup(event);
             UI.attachTaskFormButtonListeners(event);
         });
     }
 
-    static createTaskFormPopup(event, task=null, position=0) {
-        const taskHTML = document.querySelector(".task");
+    static createTaskFormPopup(event, task=null, position=null) {
+        // const taskHTML = document.querySelectorAll(".task");
         const main = document.querySelector(".main-content");
         const title = document.querySelector(".main-content>h3").textContent; 
-        console.log(taskHTML.contains(event.target));
+        
 
-        if (((taskHTML!==null) && (taskHTML.contains(event.target))) ||  (taskHTML!==null)) {
+        if ((task !== null) && (task[EDIT]===event.target)) {
+
             const editForm = document.createElement("div");
             editForm.classList.add("edit-form");
 
             if (title === "Today") {
                 editForm.innerHTML += `
-                <div class="edit-form">
-                    <label>New task name: <input type="text" id="task-name" name="task-name" value="${task[TITLE].textContent}"></label>
+                    <input type="text" id="task-name" name="task-name" placeholder="*New task name (${task[TITLE].textContent})">
+    
+                    <input type="text" id="task-notes" name="task-notes" placeholder="New notes">
 
-                    <label>New notes: <input type="text" id="task-notes" name="task-notes" value="${task[NOTES].textContent}"></label>
 
                     <div class="prio-row">
-                        <span>*New priority:</span>
+                        <span style="width: 120px">*New priority:</span>
                         <input type="radio" id="low-priority" name="priority" value="low">
                         <label for="low-priority"> Low</label>
                 
@@ -335,15 +335,13 @@ export default class UI {
                     <div class="form-buttons">
                         <button>Save</button>
                         <button>Cancel</button>
-                    </div>
-                <div>`;
+                    </div>`;
     
             } else {
                 editForm.innerHTML += `
-                <div class="edit-form">
-                    <label>New task name: <input type="text" id="task-name" name="task-name" value="${task[TITLE].textContent}"></label>
-
-                    <label>New notes: <input type="text" id="task-notes" name="task-notes" value="${task[NOTES].textContent}"></label>
+                    <input type="text" id="task-name" name="task-name" placeholder="*New task name (${task[TITLE].textContent})">
+    
+                    <input type="text" id="task-notes" name="task-notes" placeholder="Notes">
 
                     <div class="date-row">
                         <label for="dueDate">Due date: </label>
@@ -365,12 +363,12 @@ export default class UI {
                     <div class="form-buttons">
                         <button>Save</button>
                         <button>Cancel</button>
-                    </div>
-                <div>`;
+                    </div>`;
             }
             main.insertBefore(editForm, main.children[position+2]);
 
         } else {
+            console.log("submit here", task, event.target);
             const taskList = document.querySelector(".main-content");
             const addTaskButton = document.querySelector(".add-task-button");
             addTaskButton.style.display="none";
@@ -431,48 +429,57 @@ export default class UI {
         }
     }
     
-    static attachTaskFormButtonListeners(event) {
-        const task = document.querySelector(".task");
+    static attachTaskFormButtonListeners(event, task=null) {
+        // console.log("@@@");
+        // console.log(task[EDIT]);
+        // console.log(task.includes(event.target));
+        // console.log(position);
+        // console.log("@@@");
 
-        if ((task!==null && task.contains(event.target)) || (task!==null)) {
+        if ((task !== null) && (task[EDIT]===event.target)) {
+            // console.log("edit here");
             const saveEditButton = document.querySelector(".edit-form>.form-buttons>button:first-child");   
             const cancelEditButton = document.querySelector(".edit-form>.form-buttons>button:last-child");
 
             // submit via click
-            saveEditButton.addEventListener("click", (event) => {
-                const currentEditForm = document.querySelector(".task-form");
-                if (currentEditForm!==null) currentEditForm.remove();
-
-                UI.processTaskFormSubmission();
-                UI.closeTaskFormPopup(event);
+            saveEditButton.addEventListener("click", (e) => {
+                UI.processTaskFormSubmission("edit", task); // e OR event? extra params?
+                UI.closeTaskFormPopup(e, task);
             });
 
-            cancelEditButton.addEventListener("click", UI.closeTaskFormPopup);
-
+            cancelEditButton.addEventListener("click", (e) => {
+                UI.closeTaskFormPopup(e, task)
+            });
+            
         } else {
+            // console.log("submit here");
             const submitTaskButton = document.querySelector(".task-form>.form-buttons>button:first-child");   
             const cancelTaskButton = document.querySelector(".task-form>.form-buttons>button:last-child");
 
             // submit via click
-            submitTaskButton.addEventListener("click", (event) => {
-                const currentTaskForm = document.querySelector(".edit-form");
-                if (currentTaskForm!==null) currentTaskForm.remove();
-
+            submitTaskButton.addEventListener("click", (e) => {
                 UI.processTaskFormSubmission();
-                UI.closeTaskFormPopup(event);
+                UI.closeTaskFormPopup(e);
             });
 
-            cancelTaskButton.addEventListener("click", UI.closeTaskFormPopup);
+            cancelTaskButton.addEventListener("click", (e) => UI.closeTaskFormPopup(e));
         }
     }
 
-    static processTaskFormSubmission() {
+
+    static processTaskFormSubmission(type="add", task=null) {
+        
+
         const title = document.querySelector(".main-content>h3").textContent;  
         const taskName = document.querySelector("#task-name").value;
         let priority = "";
         const taskNotes = document.querySelector("#task-notes").value;
         const dueDate = document.querySelector("#dueDate");
         const dateToday = getDateToday();
+
+        console.log("////")
+        console.log(dueDate);
+        console.log("////")
 
         // Validate task name input
         if (taskName.trim() === "" || /[(,)]/.test(taskName.trim())) {
@@ -485,23 +492,56 @@ export default class UI {
         } else {
             priority = document.querySelector('input[type="radio"]:checked').value;
         
-            if (title === "Today") {
-                // only do the second add if the first add was successful
-                if (UI.addTasktoTodayProject(taskName, priority, taskNotes)) {
-                    UI.addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate);
-                }
-
-            } else if (title === "This week") {
-                // only do the second add if the first add was successful
-                if (UI.addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate)) {
-                    if (dueDate.value === dateToday) {
-                        UI.addTasktoTodayProject(taskName, priority, taskNotes);
-                    }
-                }
+            if (type==="edit") {
+                
+                
+                UI.updateTask(task, taskName, priority, taskNotes, dueDate);
 
             } else {
-                UI.addTasktoUserCreatedProject(title, taskName, priority, taskNotes, dueDate);
+                if (title === "Today") {
+                    // only do the second add if the first add was successful
+                    if (UI.addTasktoTodayProject(taskName, priority, taskNotes)) {
+                        UI.addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate);
+                    }
+    
+                } else if (title === "This week") {
+                    // only do the second add if the first add was successful
+                    if (UI.addTasktoThisWeekProject(taskName, priority, taskNotes, dueDate)) {
+                        if (dueDate.value === dateToday) {
+                            UI.addTasktoTodayProject(taskName, priority, taskNotes);
+                        }
+                    }
+    
+                } else {
+                    UI.addTasktoUserCreatedProject(title, taskName, priority, taskNotes, dueDate);
+                }
             }
+            
+        }
+    }
+
+    static updateTask(task, newTaskName, newPriority, newTaskNotes, newDueDate) {
+        const projectName = document.querySelector(".main-content>h3").textContent;
+        const titleComponents = extractComponents(task[TITLE].textContent);
+
+        if (projectName==="Today" && titleComponents.length===1) {
+            const thisWeekRange = getThisWeekRange();
+            const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
+    
+            Storage.updateTask(getDateToday(), titleComponents, task[DUE].textContent, newTaskName, newPriority, newTaskNotes, getDateToday());
+            Storage.updateTask(thisWeekProjectName, titleComponents, task[DUE].textContent, newTaskName, newPriority, newTaskNotes, getDateToday());
+    
+        } else if (projectName==="This week" && titleComponents.length===1) {
+            const thisWeekRange = getThisWeekRange();
+            const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
+    
+            Storage.updateTask(thisWeekProjectName, titleComponents, task[DUE].textContent, newTaskName, newPriority, newTaskNotes, newDueDate.value);
+            if (task[DUE].textContent===getDateToday()) {
+                Storage.updateTask(getDateToday(), titleComponents, task[DUE].textContent, newTaskName, newPriority, newTaskNotes, newDueDate.value);
+            }
+    
+        } else {
+            Storage.updateTask(projectName, titleComponents, task[DUE].textContent, newTaskName, newPriority, newTaskNotes, newDueDate.value);
         }
     }
 
@@ -509,7 +549,6 @@ export default class UI {
         const todayProject = getDateToday();
         const newTask = new Task(taskName, priority, taskNotes, todayProject);
         const succeeded = Storage.addTask(todayProject, newTask);
-        console.log("work today", succeeded)
         return succeeded;
     }
 
@@ -517,12 +556,11 @@ export default class UI {
         const thisWeekRange = getThisWeekRange();
         const thisWeekProject = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
         let succeeded = false;
-        console.log("work week")
+
         // Handle dueDate input if this fn is invoked as a side-effect of adding to TodayProject
         if (dueDate === null) {
             const dateToday = getDateToday();
             const newTask = new Task(taskName, priority, taskNotes, dateToday);
-            // console.log("why???")
             succeeded = Storage.addTask(thisWeekProject, newTask);
 
         // Handle empty and out-of-range dueDate input 
@@ -543,14 +581,14 @@ export default class UI {
         Storage.addTask(projectName, newTask);
     }
     
-    static closeTaskFormPopup(event) {
-        const task = document.querySelector(".task");
+    static closeTaskFormPopup(event, task=null) {
+        const editForm = document.querySelector(".edit-form");
         const taskForm = document.querySelector(".task-form");
         const addTaskButton = document.querySelector(".add-task-button");
         const main = document.querySelectorAll(".main-content>*"); 
         const projectName = document.querySelector(".main-content>h3").textContent.trim();
 
-        if ((task!==null && !task.contains(addTaskButton)) &&  (task!==null)) {
+        if ((task !== null) && (editForm.contains(event.target))) {
             const saveEditButton = document.querySelector(".edit-form>.form-buttons>button:first-child");   
             const cancelEditButton = document.querySelector(".edit-form>.form-buttons>button:last-child");
 
@@ -566,6 +604,7 @@ export default class UI {
             }
 
         } else {
+
             const submitTaskButton = document.querySelector(".task-form>.form-buttons>button:first-child");   
             const cancelTaskButton = document.querySelector(".task-form>.form-buttons>button:last-child");
             if (event.target === submitTaskButton) {
@@ -584,7 +623,6 @@ export default class UI {
         }
     }
     
-
     // EVENT LISTENERS FOR TASKS
     static attachTaskListeners() {
         const projectName = document.querySelector(".main-content>h3").textContent;
@@ -602,19 +640,24 @@ export default class UI {
             });
 
             // EVENT LISTENERS FOR NOTES
-            taskButtons[NOTES].addEventListener("click", (event) => {
+            taskButtons[NOTES].addEventListener("click", () => {
                 UI.deleteCurrentNotesPopup();
+                UI.deleteCurrentTaskFormPopup();
                 UI.openNotesPopup(taskButtons, idx);
-                event.stopImmediatePropagation(); // duct tape
+                // event.stopImmediatePropagation(); // duct tape
                 UI.attachNotesPopupClose();
 
             });
             
             // EVENT LISTENERS FOR EDIT
             taskButtons[EDIT].addEventListener("click", (event) => {
+                // console.log("001", taskButtons[EDIT], event.target, idx)
+                UI.deleteCurrentNotesPopup();
+                UI.deleteCurrentTaskFormPopup();
                 UI.createTaskFormPopup(event, taskButtons, idx);
-                event.stopImmediatePropagation(); // duct tape
-                UI.attachTaskFormButtonListeners(event)
+                // event.stopImmediatePropagation(); // duct tape
+                
+                UI.attachTaskFormButtonListeners(event, taskButtons);
             });
 
             // EVENT LISTENERS FOR DELETE
@@ -624,6 +667,15 @@ export default class UI {
                 UI.openProject(projectName);
             });
         })
+    }
+
+    static deleteCurrentTaskFormPopup() {
+        const currentEditForm = document.querySelector(".task-form");
+        const currentTaskForm = document.querySelector(".edit-form");
+
+        if (currentEditForm!==null) currentEditForm.remove();
+        if (currentTaskForm!==null) currentTaskForm.remove();
+        
     }
 
     // HELPER FUNCTIONS FOR TASK TOGGLE
@@ -687,7 +739,7 @@ export default class UI {
         notesForm.classList.add("notes-form");
         notesForm.innerHTML += `
                 <div class="material-icons-outlined notes-popup-close" style="font-size: 2rem;">close</div>
-                <div class="notes-box"><span style="font-weight: bold; font-size: 1.5rem;">Notes:</span> ${notes}</div>`;
+                <div class="notes-box"><span style="font-weight: bold; font-size: 1.5rem;">Notes: </span>${notes}</div>`;
 
         main.insertBefore(notesForm, main.children[position+2]);
 

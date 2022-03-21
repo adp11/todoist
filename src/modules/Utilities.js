@@ -15,10 +15,9 @@ function getDateToday() {
 
 function getThisWeekRange() {
     const today = new Date(); 
-    const day = String(today.getDay());
+    const day = today.getDay();
     let weekStart = "";
     let weekEnd = "";
-
     if (day === 0) {
         weekStart = subDays(today, 6);
         weekEnd = today;

@@ -65,7 +65,24 @@ export default class Storage {
         return (oldLength !== newLength); // check if add was successful
     }
 
-    
+    static updateTask(projectName, titleComponents, dueDate, newTaskName, newPriority, newTaskNotes, newDueDate) {
+        const todoList = Storage.getTodoList();
+
+        if (titleComponents.length===1) {
+            const project = todoList.find(projectName);
+            if (project!==undefined) {
+                const task = project.rawFind(titleComponents[0], dueDate);
+                task.updateTask(newTaskName, newPriority, newTaskNotes, newDueDate);
+            }
+        } else {
+            const project = todoList.find(titleComponents[1]);
+            if (project!==undefined) {
+                const task = project.rawFind(titleComponents[0], dueDate);
+                task.updateTask(newTaskName, newPriority, newTaskNotes, newDueDate)
+            }
+        }
+        Storage.save(todoList);
+    }
     
     static deleteTask(projectName, titleComponents, dueDate) {
         const todoList = Storage.getTodoList();
@@ -74,13 +91,14 @@ export default class Storage {
             const project = todoList.find(projectName);
             if (project!==undefined) {
                 const targetIndex = project.rawFindIndex(titleComponents[0], dueDate);
-                project.getTasks().splice(targetIndex, 1);
+                project.deleteTask(targetIndex);
+                
             }
         } else {
             const project = todoList.find(titleComponents[1]);
             if (project!==undefined) {
                 const targetIndex = project.rawFindIndex(titleComponents[0], dueDate);
-                project.getTasks().splice(targetIndex, 1);
+                project.deleteTask(targetIndex);
             }
         }
         Storage.save(todoList);
@@ -88,19 +106,18 @@ export default class Storage {
 
     static toggleTaskStatus(projectName, titleComponents, dueDate) {
         const todoList = Storage.getTodoList();
-        console.log(titleComponents[0], "..", titleComponents[1]);
 
         if (titleComponents.length===1) {
             const project = todoList.find(projectName);
             if (project!==undefined) {
                 const task = project.rawFind(titleComponents[0], dueDate);
-                task.completed = (task.completed===true) ? false : true;
+                task.toggleTaskStatus();
             }
         } else {
             const project = todoList.find(titleComponents[1]);
             if (project!==undefined) {
                 const task = project.rawFind(titleComponents[0], dueDate);
-                task.completed = (task.completed===true) ? false : true;
+                task.toggleTaskStatus();
             }
         }
         Storage.save(todoList);

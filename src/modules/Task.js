@@ -14,4 +14,15 @@ export default class Task {
     getStatus() {
         return this.completed;
     }
+
+    updateTask(newTitle, newPrio, newNotes, newDueDate) {
+        this.title = newTitle;
+        this.priority = newPrio;
+        this.notes = newNotes;
+        this.dueDate = newDueDate;
+    }
+
+    toggleTaskStatus() {
+        this.completed = (this.completed===true) ? false : true;
+    }
 }

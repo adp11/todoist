@@ -1,10 +1,8 @@
 import Task from './Task';
-import Project from './Project';
-import TodoList from './TodoList';
 import Storage from './Storage';
 import { getDateToday, getThisWeekRange, isInInterval, isValidFormat, extractComponents } from './Utilities';
 
-// positions of buttons inside every ".task" element
+// positions of buttons inside each ".task" element
 const CHECKBOX = 0;
 const TITLE = 1;
 const DUE = 2;
@@ -14,10 +12,8 @@ const DELETE = 5;
 
 export default class UI {
 
-    // LOADING CONTENT
+    // LOADING CONTENT: load order matters because of a bug related to "innerHTML+=" and "losing event listeners" when switching createAddProjectButton and attachProjects
     static loadHomepage() {
-
-        // order of loading matters because of a glitch related to "innerHTML+=" and "losing event listeners" when switching createAddButton and attachProjects
         UI.loadProjects();
         UI.createAddProjectButton();
         UI.attachProjectListeners();
@@ -54,8 +50,6 @@ export default class UI {
     }   
 
     static loadTasks(projectName) {
-
-        // load tasks for the selected project
         const todoList = Storage.getTodoList();
         let tasks = [];   
         if (projectName.includes("Today")) {
@@ -66,11 +60,12 @@ export default class UI {
                 if (prj.isUserCreated()) {
                     const extraTasks = prj.getTodayTasks(todayProject);
                     const modifiedExtraTasks = extraTasks.map(extraTask => [extraTask, prj.getName()]); // Add source of this extra scraped task for display purpose in loadTasks()
+
                     tasks = tasks.concat(modifiedExtraTasks);
                 }
             })
 
-            // Second, get tasks of that OWN project
+            // Second, get tasks of that own project
             const project = todoList.find(todayProject);
             if (project !== undefined) {
                 tasks = tasks.concat(project.getTasks().map(task => [task]));
@@ -103,7 +98,7 @@ export default class UI {
             main.innerHTML += `<h3>This week</h3>`;
 
         } else {
-            // project name can be extracted from title of ".main-content" or "sidebar"
+            // check below because project name can be extracted from title of ".main-content" or "sidebar"
             const targetProjectName = (projectName.includes("format_list_bulleted")) ? projectName.slice(20) : projectName; // 20 is the length of "format_list_bulleted" 
         
             // get tasks of that user-created project
@@ -122,12 +117,11 @@ export default class UI {
 
     static addPrioritytoTask(task, idx) {
         const currentTask = document.querySelector(`.task${idx}`);
-        
         (task.priority==="low") ? currentTask.classList.add("low-prio") :
         (task.priority==="medium") ? currentTask.classList.add("medium-prio") : currentTask.classList.add("high-prio"); 
     }
 
-    // task parameter: [a Task object, optional task source]
+    // param 'task': [a Task object, optional task source]
     static createTask(task, idx) {
         const main = document.querySelector(".main-content");
 
@@ -214,8 +208,6 @@ export default class UI {
                     <button>Cancel</button>
                 </div>
             <div>`; 
-
-        
     }
 
     static closeProjectFormPopup(event) {
@@ -246,7 +238,7 @@ export default class UI {
 
         // submit via click
         submitProjectButton.addEventListener("click", (event) => {
-                // prevent user-created projects that have this reserved name format of "yyyy-mm/dd"
+                // 2nd check: prevent user-created projects that have this reserved name format of "yyyy-mm-dd" 
                 if (newProject.value.trim() === "" || /[(,)]/.test(newProject.value.trim())) {
                     alert("Project name must not be empty and/or not include '(' or ')'.")
                 } else if (isValidFormat(newProject.value)) {
@@ -264,8 +256,8 @@ export default class UI {
         const addButton = document.querySelector(".group-2>div:last-of-type");
         addButton.addEventListener("click", () => {
             UI.createProjectFormPopup();
-            UI.attachProjectListeners(); // attach again because event listeners for projects got lost as a result of using "innerHTML +=" above
             UI.attachProjectFormButtonListeners();
+            UI.attachProjectListeners(); // attach again because event listeners for projects got lost as a result of using "innerHTML +=" above
         });
     }
     
@@ -287,40 +279,32 @@ export default class UI {
         }));
     }
 
-    /* Popup from edit OR submit
-    1. Error in (((taskHTML!==null) && (taskHTML.contains(event.target))) ||  (taskHTML!==null)) ==> createPopup, attachPopupButton (closePopup, submit/save Popup)
-    2. Isolate submission and save features. Make the others work first.
-    */
 
     // EVENT LISTENERS FOR "ADD TASK" BUTTON
     static attachAddTaskButtonListeners() {
         const addButton = document.querySelector(".add-task-button");
         addButton.addEventListener("click", (event) => {
-            UI.deleteCurrentNotesPopup();// newly added
-            UI.deleteCurrentTaskFormPopup(); // newly added
+            UI.deleteCurrentNotesPopup(); // delete any current popup before opening another
+            UI.deleteCurrentTaskFormPopup(); // delete any current popup before opening another
             UI.createTaskFormPopup(event);
             UI.attachTaskFormButtonListeners(event);
         });
     }
 
+    // 'Edit and add task' functions use the same form structure with some modifications
     static createTaskFormPopup(event, task=null, position=null) {
-        // const taskHTML = document.querySelectorAll(".task");
         const main = document.querySelector(".main-content");
         const title = document.querySelector(".main-content>h3").textContent; 
         
-
+        // This is for 'Edit Task' form popup
         if ((task !== null) && (task[EDIT]===event.target)) {
-
             const editForm = document.createElement("div");
             editForm.classList.add("edit-form");
 
             if (title === "Today") {
                 editForm.innerHTML += `
                     <input type="text" id="task-name" name="task-name" placeholder="*New task name (${task[TITLE].textContent})">
-    
                     <input type="text" id="task-notes" name="task-notes" placeholder="New notes">
-
-
                     <div class="prio-row">
                         <span style="width: 120px">*New priority:</span>
                         <input type="radio" id="low-priority" name="priority" value="low">
@@ -340,14 +324,11 @@ export default class UI {
             } else {
                 editForm.innerHTML += `
                     <input type="text" id="task-name" name="task-name" placeholder="*New task name (${task[TITLE].textContent})">
-    
                     <input type="text" id="task-notes" name="task-notes" placeholder="Notes">
-
                     <div class="date-row">
                         <label for="dueDate">Due date: </label>
                         <input type="date" id="dueDate" name="dueDate" value="${task[DUE].textContent}">
                     </div>
-
                     <div class="prio-row">
                         <span>*New priority:</span>
                         <input type="radio" id="low-priority" name="priority" value="low">
@@ -359,7 +340,6 @@ export default class UI {
                         <input type="radio" id="high-priority" name="priority" value="high">
                         <label for="high-priority"> High</label>
                     </div>
-
                     <div class="form-buttons">
                         <button>Save</button>
                         <button>Cancel</button>
@@ -367,8 +347,8 @@ export default class UI {
             }
             main.insertBefore(editForm, main.children[position+2]);
 
+        // This is for 'Add Task' form popup
         } else {
-            console.log("submit here", task, event.target);
             const taskList = document.querySelector(".main-content");
             const addTaskButton = document.querySelector(".add-task-button");
             addTaskButton.style.display="none";
@@ -377,9 +357,7 @@ export default class UI {
                 taskList.innerHTML += `
                 <div class="task-form">
                     <input type="text" id="task-name" name="task-name" placeholder="*Task name">
-    
                     <input type="text" id="task-notes" name="task-notes" placeholder="Notes">
-    
                     <div class="prio-row">
                         <span>*Priority:</span>
                         <input type="radio" id="low-priority" name="priority" value="low">
@@ -401,14 +379,11 @@ export default class UI {
                 taskList.innerHTML += `
                 <div class="task-form">
                     <input type="text" id="task-name" name="task-name" placeholder="*Task name">
-    
                     <input type="text" id="task-notes" name="task-notes" placeholder="Notes">
-                    
                     <div class="date-row">
                         <label for="dueDate">Due date: </label>
                         <input type="date" id="dueDate" name="dueDate">
                     </div>
-    
                     <div class="prio-row">
                         <span>*Priority:</span>
                         <input type="radio" id="low-priority" name="priority" value="low">
@@ -430,29 +405,22 @@ export default class UI {
     }
     
     static attachTaskFormButtonListeners(event, task=null) {
-        // console.log("@@@");
-        // console.log(task[EDIT]);
-        // console.log(task.includes(event.target));
-        // console.log(position);
-        // console.log("@@@");
-
+        // This is for 'Edit Task' form popup
         if ((task !== null) && (task[EDIT]===event.target)) {
-            // console.log("edit here");
             const saveEditButton = document.querySelector(".edit-form>.form-buttons>button:first-child");   
             const cancelEditButton = document.querySelector(".edit-form>.form-buttons>button:last-child");
 
             // submit via click
             saveEditButton.addEventListener("click", (e) => {
-                UI.processTaskFormSubmission("edit", task); // e OR event? extra params?
+                UI.processTaskFormSubmission("edit", task);
                 UI.closeTaskFormPopup(e, task);
             });
-
             cancelEditButton.addEventListener("click", (e) => {
                 UI.closeTaskFormPopup(e, task)
             });
             
+        // This is for 'Add Task' form popup
         } else {
-            // console.log("submit here");
             const submitTaskButton = document.querySelector(".task-form>.form-buttons>button:first-child");   
             const cancelTaskButton = document.querySelector(".task-form>.form-buttons>button:last-child");
 
@@ -461,25 +429,17 @@ export default class UI {
                 UI.processTaskFormSubmission();
                 UI.closeTaskFormPopup(e);
             });
-
             cancelTaskButton.addEventListener("click", (e) => UI.closeTaskFormPopup(e));
         }
     }
 
-
     static processTaskFormSubmission(type="add", task=null) {
-        
-
         const title = document.querySelector(".main-content>h3").textContent;  
         const taskName = document.querySelector("#task-name").value;
         let priority = "";
         const taskNotes = document.querySelector("#task-notes").value;
         const dueDate = document.querySelector("#dueDate");
         const dateToday = getDateToday();
-
-        console.log("////")
-        console.log(dueDate);
-        console.log("////")
 
         // Validate task name input
         if (taskName.trim() === "" || /[(,)]/.test(taskName.trim())) {
@@ -491,12 +451,12 @@ export default class UI {
 
         } else {
             priority = document.querySelector('input[type="radio"]:checked').value;
-        
+
+            // This is for processing 'Edit Task' form popup
             if (type==="edit") {
-                
-                
                 UI.updateTask(task, taskName, priority, taskNotes, dueDate);
 
+            // This is for processing 'Add Task' form popup
             } else {
                 if (title === "Today") {
                     // only do the second add if the first add was successful
@@ -511,12 +471,10 @@ export default class UI {
                             UI.addTasktoTodayProject(taskName, priority, taskNotes);
                         }
                     }
-    
                 } else {
                     UI.addTasktoUserCreatedProject(title, taskName, priority, taskNotes, dueDate);
                 }
             }
-            
         }
     }
 
@@ -528,6 +486,7 @@ export default class UI {
             const thisWeekRange = getThisWeekRange();
             const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
     
+            // add to "this week" automatically if adding to "today"
             Storage.updateTask(getDateToday(), titleComponents, task[DUE].textContent, newTaskName, newPriority, newTaskNotes, getDateToday());
             Storage.updateTask(thisWeekProjectName, titleComponents, task[DUE].textContent, newTaskName, newPriority, newTaskNotes, getDateToday());
     
@@ -536,10 +495,12 @@ export default class UI {
             const thisWeekProjectName = `${thisWeekRange[0]} > ${thisWeekRange[1]}`;
     
             Storage.updateTask(thisWeekProjectName, titleComponents, task[DUE].textContent, newTaskName, newPriority, newTaskNotes, newDueDate.value);
+            // only add to "today" if task added to "this week" happens to be due today
             if (task[DUE].textContent===getDateToday()) {
                 Storage.updateTask(getDateToday(), titleComponents, task[DUE].textContent, newTaskName, newPriority, newTaskNotes, newDueDate.value);
             }
-    
+            
+        // add to user-created projects
         } else {
             Storage.updateTask(projectName, titleComponents, task[DUE].textContent, newTaskName, newPriority, newTaskNotes, newDueDate.value);
         }
@@ -576,7 +537,6 @@ export default class UI {
     }
 
     static addTasktoUserCreatedProject(projectName, taskName, priority, taskNotes, dueDate) {
-        // const targetProjectName = target.slice(20); // 20 is the length of "format_list_bulleted" 
         const newTask = new Task(taskName, priority, taskNotes, dueDate.value);
         Storage.addTask(projectName, newTask);
     }
@@ -588,6 +548,7 @@ export default class UI {
         const main = document.querySelectorAll(".main-content>*"); 
         const projectName = document.querySelector(".main-content>h3").textContent.trim();
 
+        // This is for handling the closing of 'Edit Task' form popup
         if ((task !== null) && (editForm.contains(event.target))) {
             const saveEditButton = document.querySelector(".edit-form>.form-buttons>button:first-child");   
             const cancelEditButton = document.querySelector(".edit-form>.form-buttons>button:last-child");
@@ -603,8 +564,8 @@ export default class UI {
                 editForm.remove();
             }
 
+        // This is for handling the closing of 'Add Task' form popup
         } else {
-
             const submitTaskButton = document.querySelector(".task-form>.form-buttons>button:first-child");   
             const cancelTaskButton = document.querySelector(".task-form>.form-buttons>button:last-child");
             if (event.target === submitTaskButton) {
@@ -651,12 +612,10 @@ export default class UI {
             
             // EVENT LISTENERS FOR EDIT
             taskButtons[EDIT].addEventListener("click", (event) => {
-                // console.log("001", taskButtons[EDIT], event.target, idx)
                 UI.deleteCurrentNotesPopup();
                 UI.deleteCurrentTaskFormPopup();
                 UI.createTaskFormPopup(event, taskButtons, idx);
                 // event.stopImmediatePropagation(); // duct tape
-                
                 UI.attachTaskFormButtonListeners(event, taskButtons);
             });
 
@@ -675,9 +634,9 @@ export default class UI {
 
         if (currentEditForm!==null) currentEditForm.remove();
         if (currentTaskForm!==null) currentTaskForm.remove();
-        
     }
 
+    // All helper functions below have the same logic for CRUD.
     // HELPER FUNCTIONS FOR TASK TOGGLE
     static toggleTaskStatus(task) {
         const projectName = document.querySelector(".main-content>h3").textContent;

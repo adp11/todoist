@@ -32,13 +32,6 @@ export default class Storage {
         todoList.addProject(projectName);
         Storage.save(todoList);
     }
-
-    // static deleteProject(projectName) {
-    //     const todoList = Storage.getTodoList();
-    //     todoList.deleteProject(projectName);
-    //     Storage.save(todoList);
-    // }
-
     
     static addTask(projectName, task) {
         const todoList = Storage.getTodoList();
@@ -47,7 +40,6 @@ export default class Storage {
         let oldLength = 0;
         let newLength = 0;
         
-
         if (project !== undefined) {
             oldLength = project.getTasks().length;
             project.addTask(task);
@@ -62,7 +54,7 @@ export default class Storage {
         }
         
         Storage.save(todoList);
-        return (oldLength !== newLength); // check if add was successful
+        return (oldLength !== newLength); // return value of if add was successful
     }
 
     static updateTask(projectName, titleComponents, dueDate, newTaskName, newPriority, newTaskNotes, newDueDate) {
@@ -140,7 +132,4 @@ export default class Storage {
             }
         }
     }
-
 }
-
-

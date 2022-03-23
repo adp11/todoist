@@ -7,6 +7,7 @@ Some notes about this project:
 4. It uses localStorage to save and fetch data. And the way data is stored in localStorage has to be compatible with Class constructions to read and update.
 5. There are 4 main popups: add task, edit task, notes, and add project.
 6. There are 4 main "event listeners" parts: add task, tasks themselves, add project, and projects themselves.
+7. It uses webpack and live preview is not available.
 
 
 Bugs and lessons learned from this 1-week project:

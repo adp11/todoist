@@ -149,8 +149,8 @@ export default class UI {
                 <div class="task task${idx}"> 
                     <input type="checkbox" id="task${idx}" checked>
                     <label>${task[0].title}</label>
-                    <div class="date" style="margin-left: auto;">${task[0].dueDate}</div>
-                    <button >Notes</button>
+                    <div class="date">${task[0].dueDate}</div>
+                    <button>Notes</button>
                     <span class="material-icons-outlined">edit</span>
                     <span class="material-icons-round">delete</span>
                 </div>`;
@@ -163,7 +163,7 @@ export default class UI {
                 <div class="task task${idx}"> 
                     <input type="checkbox" id="task${idx}">
                     <label>${task[0].title}</label>
-                    <div class="date" style="margin-left: auto;">${task[0].dueDate}</div>
+                    <div class="date">${task[0].dueDate}</div>
                     <button >Notes</button>
                     <span class="material-icons-outlined">edit</span>
                     <span class="material-icons-round">delete</span>
@@ -174,7 +174,7 @@ export default class UI {
                 <div class="task task${idx}"> 
                     <input type="checkbox" id="task${idx}" checked>
                     <label>${task[0].title} (${task[1]})</label>
-                    <div class="date" style="margin-left: auto;">${task[0].dueDate}</div>
+                    <div class="date">${task[0].dueDate}</div>
                     <button >Notes</button>
                     <span class="material-icons-outlined">edit</span>
                     <span class="material-icons-round">delete</span>
@@ -188,7 +188,7 @@ export default class UI {
                 <div class="task task${idx}"> 
                     <input type="checkbox" id="task${idx}">
                     <label>${task[0].title} (${task[1]})</label>
-                    <div class="date" style="margin-left: auto;">${task[0].dueDate}</div>
+                    <div class="date">${task[0].dueDate}</div>
                     <button >Notes</button>
                     <span class="material-icons-outlined">edit</span>
                     <span class="material-icons-round">delete</span>
